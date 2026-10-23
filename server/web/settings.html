@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>LAN Paste — 服务设置</title>
+  <meta name="description" content="LAN Paste 服务端运行时设置：历史保留天数等">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // 主题预置：与主页面同一套存储键
+    (function () {
+      try {
+        var t = localStorage.getItem('lanpaste.theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+  <script type="module" src="settings.js"></script>
+</head>
+<body>
+  <main class="wizard-wrap wizard">
+    <div class="wizard-head">
+      <img src="icon.svg" alt="">
+      <h1>LAN Paste 服务设置</h1>
+    </div>
+    <p class="wizard-sub">服务端运行时参数，保存即生效（无需重启）。数据库 / 端口等部署信息在 <a href="setup.html" style="color:var(--accent)">部署向导</a> 里修改。</p>
+
+    <!-- 已配置时：token 解锁 -->
+    <section id="authCard" class="card" hidden>
+      <h2>需要访问 Token</h2>
+      <p class="hint">修改服务设置需要管理令牌（见服务端数据目录的 <code>token</code> 文件，或部署向导页）。</p>
+      <div class="form">
+        <label for="authToken">访问 Token</label>
+        <input id="authToken" type="password" autocomplete="off" placeholder="粘贴 token">
+      </div>
+      <div class="wizard-actions">
+        <button id="authBtn" class="btn primary" type="button">解锁</button>
+        <a class="btn ghost" href="./">返回主页面</a>
+      </div>
+      <p id="authError" class="wizard-result err" hidden></p>
+    </section>
+
+    <!-- 未初始化引导 -->
+    <section id="notSetupCard" class="card" hidden>
+      <h2>服务尚未初始化</h2>
+      <p class="hint">服务端还没有完成部署配置，请先运行部署向导。</p>
+      <div class="wizard-actions">
+        <a class="btn primary" href="setup.html">打开部署向导</a>
+        <a class="btn ghost" href="./">返回主页面</a>
+      </div>
+    </section>
+
+    <!-- 设置表单 -->
+    <div id="settingsBody" hidden>
+      <section class="card">
+        <h2>重置用户密码（忘记密码时用）</h2>
+        <div class="form">
+          <label for="resetUser">用户名</label>
+          <input id="resetUser" type="text" placeholder="要重置的账号名">
+          <label for="resetPass">新密码（至少 6 位，该用户所有设备需重新登录）</label>
+          <input id="resetPass" type="password" autocomplete="new-password">
+        </div>
+        <div class="wizard-actions">
+          <button id="resetPwdBtn" class="btn" type="button">重置密码</button>
+        </div>
+        <p id="resetResult" class="wizard-result" hidden></p>
+      </section>
+
+      <section class="card">
+        <h2>历史保留天数</h2>
+        <div class="form">
+          <label for="retention">超过该天数的记录自动删除（图片附件一并清理）</label>
+          <input id="retention" type="number" min="0" max="3650" value="30">
+        </div>
+        <p class="hint" style="margin-top:10px">0 = 永不清理。每小时自动清理一次；保存后会立即触发一次。</p>
+        <div class="wizard-actions">
+          <button id="saveBtn" class="btn primary" type="button">保存</button>
+          <a class="btn ghost" href="./">返回主页面</a>
+        </div>
+        <p id="saveResult" class="wizard-result" hidden></p>
+      </section>
+
+      <p class="skip-row"><a class="btn ghost" href="setup.html">部署向导（数据库 / 端口 / Token）</a></p>
+    </div>
+
+    <div id="settingsLoading" class="loading">正在读取服务端状态…</div>
+  </main>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

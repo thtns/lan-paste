@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>LAN Paste — 局域网剪贴板同步</title>
+  <meta name="description" content="LAN Paste Web 前端：局域网内跨设备剪贴板同步（兜底 UI + PWA）">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="LAN Paste">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // 主题预置：在样式渲染前确定深浅色，避免深色用户看到白屏闪烁
+    (function () {
+      try {
+        var t = localStorage.getItem('lanpaste.theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img class="brand-icon" src="icon.svg" alt="">
+        <div class="brand-text">
+          <h1>LAN Paste</h1>
+          <p id="deviceLabel" title="">未配置</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="connPill" class="pill pill-offline" hidden><i class="dot"></i><span id="connText">已断开</span></span>
+        <button id="themeBtn" class="icon-btn" type="button" title="切换深色 / 浅色" aria-label="切换主题">
+          <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <button id="qrBtn" class="icon-btn" type="button" title="手机扫码接入(二维码含地址与 Token)" aria-label="手机扫码接入">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21h.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16h.01"/><path d="M16 12h1"/><path d="M21 12h.01"/><path d="M12 21h.01"/></svg>
+        </button>
+        <button id="wizardBtn" class="icon-btn" type="button" title="服务器部署向导（存储 / 端口 / Token）" aria-label="部署向导">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+        </button>
+        <button id="settingsBtn" class="icon-btn" type="button" title="本机设置（服务器地址 / Token / 设备名）" aria-label="设置">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="statusBar" class="statusbar" hidden><span id="statusText"></span></div>
+
+  <main class="container">
+    <!-- 首次访问 / 修改配置（本机连接信息） -->
+    <section id="setupCard" class="card setup" hidden>
+      <h2>连接到服务器</h2>
+      <p class="hint">首次使用请填写服务端信息。Token 见服务端启动日志，或服务端数据目录下的 <code>token</code> 文件。</p>
+      <form id="setupForm" novalidate>
+        <label for="serverInput">服务器地址</label>
+        <input id="serverInput" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="http://192.168.1.10:8080">
+        <label for="usernameInput">用户名</label>
+        <input id="usernameInput" type="text" autocomplete="username" spellcheck="false" placeholder="首次使用会在此账号下记录本设备">
+        <label for="passwordInput">密码</label>
+        <input id="passwordInput" type="password" autocomplete="current-password" placeholder="至少 6 位">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:500;margin-top:8px">
+          <input id="registerCheck" type="checkbox" style="width:auto;accent-color:var(--accent)">
+          注册新用户（已有账号则不勾选，直接登录）
+        </label>
+        <label for="deviceInput">设备名</label>
+        <input id="deviceInput" type="text" maxlength="32" autocomplete="off" spellcheck="false">
+        <p id="setupError" class="error" hidden></p>
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="saveConnectBtn">保存并连接</button>
+          <button type="button" id="cancelSetup" class="btn ghost" hidden>取消</button>
+        </div>
+        <p class="fine">
+          <a class="linklike" id="srvSettingsLink" href="settings.html">服务端设置（历史保留天数等）→</a>
+          &nbsp;·&nbsp;
+          <a class="linklike" href="setup.html">部署向导 →</a>
+        </p>
+      </form>
+    </section>
+
+    <!-- 主界面 -->
+    <section id="mainUI" hidden>
+      <section class="card composer">
+        <label class="composer-label" for="editor">输入文本，同步到局域网其他设备；图片可直接粘贴</label>
+        <textarea id="editor" autofocus autocapitalize="off" spellcheck="false" placeholder="在这里输入文本，然后点「同步」；&#10;在页面任意位置按 Ctrl / ⌘ + V，可直接上传文本或图片。"></textarea>
+        <div class="composer-foot">
+          <span class="kbd-hint"><kbd>Ctrl / ⌘</kbd>+<kbd>Enter</kbd> 同步 · <kbd>Ctrl / ⌘</kbd>+<kbd>V</kbd> 直接上传文本或图片</span>
+          <button id="syncBtn" class="btn primary" type="button">同步</button>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <div class="seg" id="seg">
+          <button type="button" data-f="all" class="active">全部<b id="cAll"></b></button>
+          <button type="button" data-f="text">文本<b id="cText"></b></button>
+          <button type="button" data-f="image">图片<b id="cImg"></b></button>
+        </div>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="searchInput" type="search" placeholder="搜索剪贴板历史…" autocomplete="off">
+        </div>
+        <button id="refreshBtn" class="icon-btn" type="button" title="刷新列表" aria-label="刷新列表">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
+      </section>
+
+      <div id="listLoading" class="loading" hidden>加载中…</div>
+      <div id="emptyHint" class="empty" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        <p class="empty-title">还没有同步记录</p>
+        <p class="empty-desc">在其他设备复制文字或图片，内容会自动出现在这里；<br>也可以用上方输入框发送第一条内容。</p>
+      </div>
+      <div id="noMatch" class="empty" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
+        <p class="empty-title">没有匹配的内容</p>
+        <p class="empty-desc">试试其他关键词，或切换筛选条件。</p>
+      </div>
+      <div id="groups"></div>
+    </section>
+  </main>
+
+  <!-- 图片灯箱 -->
+  <div id="lightbox" class="lightbox" hidden>
+    <figure>
+      <img id="lightboxImg" alt="剪贴板图片">
+      <figcaption id="lightboxMeta"></figcaption>
+    </figure>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>LAN Paste — 部署向导</title>
+  <meta name="description" content="LAN Paste 服务端部署向导：选择数据库、测试连接、完成配置">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // 主题预置：与主页面同一套存储键，避免向导页主题不一致 / 白屏闪烁
+    (function () {
+      try {
+        var t = localStorage.getItem('lanpaste.theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+  <script type="module" src="setup.js"></script>
+</head>
+<body>
+  <main class="wizard-wrap wizard">
+    <div class="wizard-head">
+      <img src="icon.svg" alt="">
+      <h1>LAN Paste 部署向导</h1>
+    </div>
+    <p class="wizard-sub">配置存储后端与服务端口，保存在服务端数据目录的 config.json，无需手工编辑任何文件。<span id="srvVersion" style="color:var(--text-3)"></span></p>
+
+    <!-- 已配置时：先解锁 -->
+    <section id="authCard" class="card" hidden>
+      <h2>此服务已配置过</h2>
+      <p class="hint">修改服务器配置需要访问 Token（见服务端数据目录的 <code>token</code> 文件）。</p>
+      <div class="form">
+        <label for="authToken">访问 Token</label>
+        <input id="authToken" type="password" autocomplete="off" placeholder="粘贴 token 后点右侧按钮">
+      </div>
+      <div class="wizard-actions">
+        <button id="authBtn" class="btn primary" type="button">解锁配置</button>
+        <a class="btn ghost" href="./">返回主页面</a>
+      </div>
+      <p id="authError" class="wizard-result err" hidden></p>
+    </section>
+
+    <!-- 向导主体 -->
+    <div id="wizardBody" hidden>
+      <section class="card">
+        <h2>1 · 选择存储后端</h2>
+        <div class="store-opts" id="storeOpts">
+          <label class="store-opt" data-v="memory">
+            <input type="radio" name="store" value="memory" checked>
+            <span>
+              <span class="t">内存（零配置）</span><br>
+              <span class="d">不依赖任何数据库，服务重启后记录清空。适合先跑起来试试。</span>
+            </span>
+          </label>
+          <label class="store-opt" data-v="postgres">
+            <input type="radio" name="store" value="postgres">
+            <span>
+              <span class="t">PostgreSQL（推荐）</span><br>
+              <span class="d">持久化存储。可复用 PVE 上已有的实例，本服务自动建表。</span>
+            </span>
+          </label>
+          <label class="store-opt" data-v="mysql">
+            <input type="radio" name="store" value="mysql">
+            <span>
+              <span class="t">MySQL / MariaDB</span><br>
+              <span class="d">同样持久化，效果与 PostgreSQL 一致。</span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="card" id="dbCard" hidden>
+        <h2>2 · 数据库连接</h2>
+        <div class="form">
+          <label for="dbHost">主机地址</label>
+          <input id="dbHost" type="text" placeholder="例如 192.168.1.10（数据库所在机器的内网 IP）">
+          <label for="dbPort">端口</label>
+          <input id="dbPort" type="number" placeholder="留空则用默认端口">
+          <label for="dbUser">用户名</label>
+          <input id="dbUser" type="text" autocomplete="off">
+          <label for="dbPass">密码</label>
+          <input id="dbPass" type="password" autocomplete="new-password" placeholder="已配置过时留空表示不修改">
+          <label for="dbName">数据库名</label>
+          <input id="dbName" type="text" value="paste" placeholder="不存在且有权限时会自动创建">
+          <div id="sslRow" hidden>
+            <label for="dbSSL">sslmode（PostgreSQL）</label>
+            <input id="dbSSL" type="text" value="disable" placeholder="局域网默认 disable">
+          </div>
+        </div>
+        <div class="wizard-actions">
+          <button id="testBtn" class="btn" type="button">测试连接</button>
+        </div>
+        <p id="testResult" class="wizard-result" hidden></p>
+        <p class="fine">提示：建议先在数据库里建专用账号与空库（如 <code>CREATE DATABASE paste;</code>），
+        服务端只需要这一个库的权限；数据库不存在时本向导会尝试自动创建。</p>
+      </section>
+
+      <section class="card">
+        <h2>3 · 服务设置</h2>
+        <div class="form">
+          <label for="listen">监听地址（修改后需重启服务生效）</label>
+          <input id="listen" type="text" placeholder=":8080">
+        </div>
+        <p class="hint" style="margin-top:12px">管理令牌（仅用于解锁部署向导 / 设置接口；设备接入使用账号登录，无需此令牌）</p>
+        <div class="token-row">
+          <code id="tokenText">…</code>
+          <button id="regenBtn" class="btn" type="button" title="重新生成（所有已连接设备需更新 token）">重新生成</button>
+        </div>
+        <p class="fine">重新生成后：桌面客户端与已配置的网页需要更新 token 才能继续同步。</p>
+        <div class="wizard-actions" style="margin-top:14px">
+          <a id="qrLink" class="btn ghost" href="/download" title="在手机上打开本页生成的接入二维码">📱 手机扫码接入</a>
+          <a id="settingsLink" class="btn ghost" href="settings.html" title="历史保留天数等运行时参数">⚙️ 服务设置</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="wizard-actions">
+          <button id="saveBtn" class="btn primary" type="button">保存并启用</button>
+          <a class="btn ghost" href="./">返回主页面</a>
+        </div>
+        <p id="saveResult" class="wizard-result" hidden></p>
+      </section>
+
+      <p class="skip-row"><button id="skipBtn" class="linklike" type="button">跳过向导，直接使用（保持当前存储不变）</button></p>
+    </div>
+
+    <div id="wizardLoading" class="loading">正在读取服务端状态…</div>
+  </main>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

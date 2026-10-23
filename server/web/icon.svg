@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="LAN Paste">
+  <title>LAN Paste</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+  <!-- 剪贴板板体 -->
+  <rect x="8" y="9" width="48" height="50" rx="10" fill="url(#g)"/>
+  <!-- 顶部夹子 -->
+  <rect x="22" y="4" width="20" height="12" rx="6" fill="#312e81"/>
+  <!-- 纸张 -->
+  <rect x="14" y="16" width="36" height="39" rx="6" fill="#ffffff"/>
+  <!-- 文本行 -->
+  <g stroke="#a5b4fc" stroke-width="4" stroke-linecap="round">
+    <line x1="22" y1="27" x2="42" y2="27"/>
+    <line x1="22" y1="36" x2="42" y2="36"/>
+    <line x1="22" y1="45" x2="33" y2="45"/>
+  </g>
+</svg>

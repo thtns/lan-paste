@@ -1,0 +1,25 @@
+# 构建产物（客户端三平台打包输出）
+client/build/
+client/rsrc_windows_*.syso
+
+# Go
+*.test
+*.out
+coverage.*
+
+# 服务端编译产物 / 本地运行数据
+server/lanpaste-server
+server/lanpaste
+server/data/
+server/token
+server/users.json
+*.log
+
+# 前端（server/web 为纯静态无构建；mock 调试产物不入库）
+server/web/node_modules/
+
+# IDE / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

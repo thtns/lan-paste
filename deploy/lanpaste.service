@@ -1,0 +1,29 @@
+# LAN Paste 服务端 systemd 单元（手动安装参考）
+#
+# 推荐：直接用 deploy/install.sh，它会自动完成本文件的全部步骤。
+# 配置（数据库 / 端口 / token）不在本文件里——安装后浏览器打开
+# http://<主机IP>:8080 完成部署向导，配置持久化在 /var/lib/lanpaste/config.json。
+[Unit]
+Description=LAN Paste clipboard sync server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lanpaste
+Group=lanpaste
+ExecStart=/usr/local/bin/lanpaste-server -data-dir /var/lib/lanpaste
+# 可选覆盖（如 PASTE_TOKEN）：写入 /etc/lanpaste.env（权限 600）
+EnvironmentFile=-/etc/lanpaste.env
+Restart=on-failure
+RestartSec=3
+
+# 轻量加固
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/lanpaste
+
+[Install]
+WantedBy=multi-user.target
