@@ -20,6 +20,26 @@ v0.4（应用内设置向导，告别浏览器配置）：
 - 服务端：单二进制 ~17MB，三存储后端，幂等建表 + 老库自动补列
 - 客户端：三平台单二进制，纯 Go 零依赖（macOS 托盘需 cgo），`-install` 一键开机自启
 
+## 下载安装（预编译包，无需 Go 环境）
+
+从 [Releases](https://github.com/thtns/lan-paste/releases) 下载对应平台的安装包（每个包都附 sha256 校验值），三步之内开始同步：
+
+| 平台 | 包 | 安装 |
+|---|---|---|
+| macOS (Apple Silicon) | `LanPaste-x.x.x-macos-arm64.dmg` | 挂载 → 拖入 Applications → 双击打开 |
+| macOS (Intel) | `LanPaste-x.x.x-macos-amd64.dmg` | 同上 |
+| Windows x64 / ARM64 | `LanPaste-x.x.x-windows-*.zip` | 解压 → 双击 `LanPaste.exe` |
+| Linux x64 | `LanPaste-x.x.x-linux-amd64.tar.gz` | 解压 → `./lanpaste-client` |
+
+首次打开的设置对话框里填服务器地址 + 用户名密码即可（详见 [client/README.md](client/README.md)）。**没有 Go 环境也能用**；有环境的也可以用 `client/build-mac.sh` / `build-windows.sh` 一键自行构建。
+
+**安全提示（开源软件无付费签名证书，属正常现象）：**
+
+- **macOS**：首次打开可能提示「已损坏，无法打开」或「无法验证开发者」。处理：右键 `LanPaste.app` →「打开」；仍不行就执行一次 `xattr -cr /Applications/LanPaste.app` 再打开。本应用为 ad-hoc 签名，Gatekeeper 放行一次后续不再打扰
+- **Windows**：SmartScreen 可能提示「Windows 已保护你的电脑」→ 点「更多信息」→「仍要运行」。不放心可核对 Releases 里的 sha256 校验值，或用源码自行构建
+
+服务端在任意有 Go 环境的机器上一条命令部署（或交叉编译后直接上传二进制，见 [deploy/](deploy/)）。
+
 ## 目录
 
 ```
