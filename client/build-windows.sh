@@ -26,7 +26,6 @@ APP_NAME=LanPaste
 
 say() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 
-command -v zip >/dev/null 2>&1 || { echo "未找到 zip 命令" >&2; exit 1; }
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
@@ -43,10 +42,11 @@ CGO_ENABLED=0 GOOS=windows GOARCH="$ARCH" go build -trimpath \
 rm -f "rsrc_windows_${ARCH}.syso"   # 移出包目录，避免影响其他平台构建
 
 say "生成安装自启脚本与说明"
-# 注意：bat 需要 CRLF 换行
+# bat：中文按 GB18030 编码（cmd 默认代码页 936 直接可读），CRLF 换行
 printf '@echo off\r\ncd /d %%~dp0\r\nLanPaste.exe -install\r\nstart "" "LanPaste.exe"\r\necho 已注册开机自启并启动 LAN Paste。\r\ntimeout /t 3 >nul\r\n' \
-    > "$OUT/安装自启.bat"
-cat > "$OUT/使用说明.txt" <<'EOF'
+    | iconv -f UTF-8 -t GB18030 > "$OUT/安装自启.bat"
+# 说明：UTF-8 + BOM（带 BOM 旧版记事本也能正确识别）
+{ printf '\xef\xbb\xbf'; cat <<'EOF'
 LAN Paste — 局域网剪贴板同步（Windows 客户端）
 
 【首次使用】
@@ -74,10 +74,17 @@ LAN Paste — 局域网剪贴板同步（Windows 客户端）
 【卸载】
   退出托盘 → 删除本目录 → 命令行执行 LanPaste.exe -uninstall 移除自启。
 EOF
+} > "$OUT/使用说明.txt"
 
-say "打包 zip"
-(cd "$OUT" && zip -q "${APP_NAME}-${VERSION}-windows-${ARCH}.zip" \
-    "${APP_NAME}.exe" "安装自启.bat" "使用说明.txt")
+say "打包 zip（python3 zipfile：非 ASCII 文件名自动置 UTF-8 标志位，Windows 资源管理器不乱码）"
+command -v python3 >/dev/null || { echo "缺少 python3（用于正确打包中文文件名）" >&2; exit 1; }
+python3 - "$OUT" "${APP_NAME}-${VERSION}-windows-${ARCH}.zip" <<'PY'
+import os, sys, zipfile
+src, out = sys.argv[1], sys.argv[2]
+with zipfile.ZipFile(os.path.join(src, out), "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+    for n in ("LanPaste.exe", "安装自启.bat", "使用说明.txt"):
+        zf.write(os.path.join(src, n), n)
+PY
 rm -f "$OUT/app.ico"
 
 say "完成！"
