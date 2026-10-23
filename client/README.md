@@ -37,7 +37,7 @@ cd client && ./build-windows.sh     # 产物：build/windows/（amd64；ARM64 �
 
 - `LanPaste.exe`：**无控制台窗口**（`-H=windowsgui`），内嵌应用图标与版本资源；托盘图标为 ICO 格式（Windows LoadImage 只认 .ico，macOS/Linux 用 PNG）
 - 提示：Windows 11 默认把新托盘图标收进「^」折叠区——任务栏设置 → 其他系统托盘图标 → 打开 LAN Paste，或直接把图标拖到任务栏
-- zip 内含 `安装自启.bat`（双击 = 注册开机自启 + 立即启动）与使用说明
+- zip 内含 `install-autostart.bat`（双击 = 注册开机自启 + 立即启动）与 `README.txt` 使用说明（包内文件名用纯 ASCII：资源管理器的 zip 解码不认 UTF-8 标志位，中文名必乱码）
 - 分发：把 zip 发给 Windows 机器 → 解压 → 双击 LanPaste.exe → 应用内设置窗口完成配置 → 双击 bat 装自启
 
 ### macOS 打包（.app + .dmg）

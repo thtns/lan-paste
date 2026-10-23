@@ -7,8 +7,8 @@
 #
 # 产物在 client/build/windows/ 下：
 #   LanPaste.exe                          主程序（无黑色控制台窗口，托盘运行）
-#   安装自启.bat                          双击 = 注册开机自启 + 立即启动
-#   使用说明.txt
+#   install-autostart.bat                 双击 = 注册开机自启 + 立即启动
+#   README.txt                            使用说明（UTF-8）
 #   LanPaste-<版本>-windows-<架构>.zip    以上三者打包，直接分发
 #
 # 说明：
@@ -41,11 +41,11 @@ CGO_ENABLED=0 GOOS=windows GOARCH="$ARCH" go build -trimpath \
     -o "$OUT/${APP_NAME}.exe" .
 rm -f "rsrc_windows_${ARCH}.syso"   # 移出包目录，避免影响其他平台构建
 
-say "生成安装自启脚本与说明"
-# bat：中文按 GB18030 编码（cmd 默认代码页 936 直接可读），CRLF 换行
-printf '@echo off\r\ncd /d %%~dp0\r\nLanPaste.exe -install\r\nstart "" "LanPaste.exe"\r\necho 已注册开机自启并启动 LAN Paste。\r\ntimeout /t 3 >nul\r\n' \
-    | iconv -f UTF-8 -t GB18030 > "$OUT/安装自启.bat"
-# 说明：UTF-8 + BOM（带 BOM 旧版记事本也能正确识别）
+say "生成自启脚本与说明（文件名用纯 ASCII：Windows 资源管理器的 zip 解码无视 UTF-8 标志位，中文名必乱码）"
+# bat：内容纯 ASCII + CRLF，任何代码页下都不会乱码
+printf '@echo off\r\ncd /d %%~dp0\r\nLanPaste.exe -install\r\nstart "" "LanPaste.exe"\r\necho LAN Paste: autostart installed, app started.\r\ntimeout /t 3 >nul\r\n' \
+    > "$OUT/install-autostart.bat"
+# 说明：中文内容放文件里（UTF-8 + BOM，记事本双击即读），文件名保持 ASCII
 { printf '\xef\xbb\xbf'; cat <<'EOF'
 LAN Paste — 局域网剪贴板同步（Windows 客户端）
 
@@ -61,7 +61,7 @@ LAN Paste — 局域网剪贴板同步（Windows 客户端）
   不放心可校验哈希（下载页附 sha256 校验值），或用源码自行构建。
 
 【开机自启】
-  双击「安装自启.bat」一次即可（已运行时也可执行，不会重复启动）。
+  双击「install-autostart.bat」一次即可（已运行时也可执行，不会重复启动）。
 
 【日常使用】
   任何设备上复制文字/图片 → 托盘无操作自动同步 → 直接粘贴。
@@ -74,15 +74,15 @@ LAN Paste — 局域网剪贴板同步（Windows 客户端）
 【卸载】
   退出托盘 → 删除本目录 → 命令行执行 LanPaste.exe -uninstall 移除自启。
 EOF
-} > "$OUT/使用说明.txt"
+} > "$OUT/README.txt"
 
-say "打包 zip（python3 zipfile：非 ASCII 文件名自动置 UTF-8 标志位，Windows 资源管理器不乱码）"
-command -v python3 >/dev/null || { echo "缺少 python3（用于正确打包中文文件名）" >&2; exit 1; }
+say "打包 zip（python3 zipfile，纯 ASCII 文件名，任何系统与解压工具都不乱码）"
+command -v python3 >/dev/null || { echo "缺少 python3（用于打包）" >&2; exit 1; }
 python3 - "$OUT" "${APP_NAME}-${VERSION}-windows-${ARCH}.zip" <<'PY'
 import os, sys, zipfile
 src, out = sys.argv[1], sys.argv[2]
 with zipfile.ZipFile(os.path.join(src, out), "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-    for n in ("LanPaste.exe", "安装自启.bat", "使用说明.txt"):
+    for n in ("LanPaste.exe", "install-autostart.bat", "README.txt"):
         zf.write(os.path.join(src, n), n)
 PY
 rm -f "$OUT/app.ico"
