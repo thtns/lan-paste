@@ -288,7 +288,13 @@ func staticHandler() http.Handler {
 	if err != nil {
 		log.Fatalf("内嵌 web 资源异常: %v", err)
 	}
-	return http.FileServer(http.FS(sub))
+	files := http.FileServer(http.FS(sub))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 网页壳升级必须立刻到达客户端：html/js/css 一律要求回源校验新鲜度，
+		// 避免手机浏览器按启发式缓存住旧版脚本（图片 blob 有自己的内容寻址缓存策略）
+		w.Header().Set("Cache-Control", "no-cache")
+		files.ServeHTTP(w, r)
+	})
 }
 
 // loadToken 加载共享 token：环境变量 PASTE_TOKEN 优先；否则读取 <data-dir>/token；
