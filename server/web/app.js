@@ -147,7 +147,10 @@ function openSetup({ initial = false, error = '' } = {}) {
   els.cancelSetup.hidden = initial;
   els.serverInput.value = cfg ? cfg.server : location.origin;
   els.deviceInput.value = localStorage.getItem(DEVICE_KEY) || 'web-' + randomId(5);
-  (cfg ? els.usernameInput : els.serverInput).focus();
+  // 移动端（触屏）不自动聚焦：一聚焦键盘就弹出糊住屏幕；桌面保留
+  if (!matchMedia('(pointer: coarse)').matches) {
+    (cfg ? els.usernameInput : els.serverInput).focus();
+  }
 }
 
 function closeSetup() {
@@ -283,7 +286,8 @@ function start(cfg) {
   });
   state.socket.connect();
 
-  els.editor.focus();
+  // 移动端不自动聚焦编辑框（键盘会立即弹出）；桌面保留打字优先的体验
+  if (!matchMedia('(pointer: coarse)').matches) els.editor.focus();
   refreshList();
 }
 
