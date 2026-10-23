@@ -370,6 +370,7 @@ export class ClipListView {
       btn.type = 'button';
       btn.addEventListener('click', () => {
         const collapsed = pre.classList.toggle('clamp');
+        pre.classList.toggle('expanded', !collapsed);
         if (collapsed) this.expanded.delete(clip.id);
         else this.expanded.add(clip.id);
         btn.textContent = collapsed ? '展开' : '收起';
@@ -400,6 +401,7 @@ export class ClipListView {
     const el = this.groupsEl.querySelector(`.clip[data-id="${CSS.escape(String(id))}"] .clip-text`);
     if (!el) return;
     el.classList.remove('clamp');
+    el.classList.add('expanded');
     this.expanded.add(Number(id));
     const range = document.createRange();
     range.selectNodeContents(el);

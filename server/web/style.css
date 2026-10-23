@@ -343,10 +343,13 @@ html[data-theme="dark"] .i-moon { display: none; }
   line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: anywhere; /* 超长无空格字符串（base64/URL）不撑破卡片宽度 */
   position: relative;
   font-family: inherit;
 }
 .clip-text.clamp { max-height: 176px; overflow: hidden; }
+/* 展开态也限高：超长文本在卡片内滚动，页面本身不被撑大（点「展开」看全文用滚动条） */
+.clip-text.expanded { max-height: min(60vh, 640px); overflow-y: auto; }
 .clip-text.clamp::after {
   content: "";
   position: absolute;
